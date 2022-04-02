@@ -23,6 +23,10 @@ def load_jsonc(filepath: str):
     return json.loads(text_without_comment)
 
 
+def to_twitter_link(username: str) -> str:
+    return f"[@{username}](https://twitter.com/{username})"
+
+
 @scheduler.scheduled_job("interval", minutes=15, next_run_time=datetime.now())  # type: ignore
 def observe_task():
     logger = getLogger("tw-observer")
@@ -57,16 +61,14 @@ def observe_task():
             cf = next(filter(lambda _cf: _cf["id"] == userid, current_followers), None)
             if cf:
                 if pf["username"] != cf["username"]:
-                    notifications.append(f"@{pf['username']} has renamed to @{cf['username']}")
+                    notifications.append(f"@{pf['username']} has renamed to {to_twitter_link(cf['username'])}")
             else:
                 _res = tc.get_user(id=userid)
                 if errors := _res.errors:  # type:ignore
                     notifications.append(errors[0]["detail"])
                 else:
                     user: tweepy.User = _res.data  # type:ignore
-                    notifications.append(
-                        f"[@{user.username}](https://twitter.com/{user.username}) has been removed **{me.username}**"
-                    )
+                    notifications.append(f"{to_twitter_link(user.username)} has been removed **{me.username}**")
 
         collection.delete_many({})
         collection.insert_many(current_followers)
