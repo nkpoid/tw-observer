@@ -78,6 +78,7 @@ def observe_task():
             headers={"Content-Type": "application/json"},
         )
 
+    mc.close()
     logger.info("Done.")
 
 
