@@ -21,7 +21,7 @@ def load_jsonc(filepath: str):
     return json.loads(text_without_comment)
 
 
-@scheduler.scheduled_job("interval", minutes=15, next_run_time=datetime.now())  # type: ignore
+@scheduler.scheduled_job("interval", minutes=3, next_run_time=datetime.now())  # type: ignore
 def observe_task():
     logger = getLogger("tw-observer")
     logger.info("Start observe...")
