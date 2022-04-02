@@ -47,7 +47,7 @@ def observe_task():
         _current_followers = list(
             tweepy.Paginator(tc.get_users_followers, id=me.id, user_auth=me.protected, max_results=1000).flatten()
         )
-        current_followers = [{"id": u.id, "name": u.name, "username": u.username} for u in _current_followers]
+        current_followers = [{"id": u.id, "username": u.username} for u in _current_followers]
         diff = set([o["id"] for o in prev_followers]) - set([o["id"] for o in current_followers])
 
         for user_id in diff:
