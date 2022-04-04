@@ -44,7 +44,7 @@ def friendship_observe_task(r: redis.Redis):
         logger.info(f"Processing @{me.username}")
 
         redis_key = f"friendship_observe:{me.username}"
-        prev_followers: dict[int, dict[str, str]]
+        prev_followers: dict[str, dict[str, str]]
         if d := r.get(redis_key):
             prev_followers = json.loads(d)
         else:
@@ -52,7 +52,7 @@ def friendship_observe_task(r: redis.Redis):
         _current_followers: list[tweepy.User] = list(
             tweepy.Paginator(tc.get_users_followers, id=me.id, user_auth=me.protected, max_results=1000).flatten()
         )
-        current_followers = {u.id: {"username": u.username} for u in _current_followers}
+        current_followers = {str(u.id): {"username": u.username} for u in _current_followers}
 
         for id, pf in prev_followers.items():
             if cf := current_followers[id]:
