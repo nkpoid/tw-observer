@@ -62,7 +62,7 @@ def friendship_observe_task(r: redis.Redis):
             else:
                 _res = tc.get_user(id=userid)
                 if errors := _res.errors:  # type:ignore
-                    notifications.append(errors[0]["detail"])
+                    notifications.append(f"@{pf['username']}: {errors[0]['detail']}")
                 else:
                     user: tweepy.User = _res.data  # type:ignore
                     notifications.append(f"{to_twitter_link(user.username)} has been removed **{me.username}**")
