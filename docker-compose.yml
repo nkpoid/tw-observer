@@ -6,13 +6,13 @@ services:
     restart: always
     env_file: .env
     environment:
-      - MONGODB_URI=mongodb://mongo:27017
+      - REDIS_URL=redis://redis:6379
 
-  mongo:
-    image: mongo
+  redis:
+    image: redis
     restart: always
     ports:
-      - 27017:27017
+      - 6379:6379
     volumes:
-      - ./db:/data/db
-      - ./configdb:/data/configdb
+      - ./redis:/data
+    command: redis-server --appendonly yes

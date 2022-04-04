@@ -10,10 +10,8 @@ from typing import List
 import requests
 import tweepy
 from apscheduler.schedulers.blocking import BlockingScheduler
-from pymongo import MongoClient
 
-scheduler = BlockingScheduler(timezone="Asia/Tokyo")
-logging.basicConfig(level=logging.INFO)
+import redis
 
 
 def load_jsonc(filepath: str):
@@ -27,13 +25,10 @@ def to_twitter_link(username: str) -> str:
     return f"[@{username}](https://twitter.com/{username})"
 
 
-@scheduler.scheduled_job("interval", minutes=15, next_run_time=datetime.now())  # type: ignore
-def observe_task():
+def friendship_observe_task(r: redis.Redis):
     logger = getLogger("tw-observer")
     logger.info("Start observe task...")
 
-    mc = MongoClient(os.environ["MONGODB_URI"])
-    db = mc.tw_observer
     notifications: List[str] = []
 
     tokens = load_jsonc("./tokens.jsonc")
@@ -48,9 +43,12 @@ def observe_task():
 
         me: tweepy.User = tc.get_me(user_fields=["protected"]).data  # type:ignore
         logger.info(f"Processing @{me.username}")
-        collection = db[me.username]
 
-        prev_followers = list(collection.find({}, {"_id": False}))
+        redis_key = f'friendship_observe:{me.username}'
+        if d := r.get(redis_key):
+            prev_followers = json.loads(d)
+        else:
+            prev_followers = []
         _current_followers = list(
             tweepy.Paginator(tc.get_users_followers, id=me.id, user_auth=me.protected, max_results=1000).flatten()
         )
@@ -70,8 +68,7 @@ def observe_task():
                     user: tweepy.User = _res.data  # type:ignore
                     notifications.append(f"{to_twitter_link(user.username)} has been removed **{me.username}**")
 
-        collection.delete_many({})
-        collection.insert_many(current_followers)
+        r.set(redis_key, json.dumps(current_followers))
 
     if notifications:
         requests.post(
@@ -80,9 +77,15 @@ def observe_task():
             headers={"Content-Type": "application/json"},
         )
 
-    mc.close()
     logger.info("Done.")
 
 
 if __name__ == "__main__":
+    scheduler = BlockingScheduler(timezone="Asia/Tokyo")
+    logging.basicConfig(level=logging.INFO)
+
+    r = redis.from_url(os.environ["REDIS_URL"])
+
+    scheduler.add_job(friendship_observe_task, "interval", [r], minutes=15, next_run_time=datetime.now())  # type:ignore
+
     scheduler.start()

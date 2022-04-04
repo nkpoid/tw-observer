@@ -7,9 +7,9 @@ authors = ["nkpoid <nkpoidjp@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.10"
 tweepy = "^4.8.0"
-pymongo = "^4.0.2"
 requests = "^2.27.1"
 APScheduler = "^3.9.1"
+redis = "^4.2.1"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^4.0.1"

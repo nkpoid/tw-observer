@@ -1,5 +1,6 @@
 db/
 configdb/
+redis/
 
 .env
 tokens.jsonc
