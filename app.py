@@ -5,7 +5,6 @@ import re
 from collections import OrderedDict
 from datetime import datetime
 from logging import getLogger
-from typing import List
 
 import requests
 import tweepy
@@ -29,7 +28,7 @@ def friendship_observe_task(r: redis.Redis):
     logger = getLogger("tw-observer")
     logger.info("Start observe task...")
 
-    notifications: List[str] = []
+    notifications: list[str] = []
 
     tokens = load_jsonc("./tokens.jsonc")
     for token in tokens:
@@ -44,7 +43,7 @@ def friendship_observe_task(r: redis.Redis):
         me: tweepy.User = tc.get_me(user_fields=["protected"]).data  # type:ignore
         logger.info(f"Processing @{me.username}")
 
-        redis_key = f'friendship_observe:{me.username}'
+        redis_key = f"friendship_observe:{me.username}"
         if d := r.get(redis_key):
             prev_followers = json.loads(d)
         else:
