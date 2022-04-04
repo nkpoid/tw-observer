@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "tw-observer"
+name = "twitter-ff-observer"
 version = "0.1.0"
 description = ""
 authors = ["nkpoid <nkpoidjp@gmail.com>"]
