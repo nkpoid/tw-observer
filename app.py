@@ -44,27 +44,26 @@ def friendship_observe_task(r: redis.Redis):
         logger.info(f"Processing @{me.username}")
 
         redis_key = f"friendship_observe:{me.username}"
+        prev_followers: dict[int, dict[str, str]]
         if d := r.get(redis_key):
             prev_followers = json.loads(d)
         else:
-            prev_followers = []
-        _current_followers = list(
+            prev_followers = {}
+        _current_followers: list[tweepy.User] = list(
             tweepy.Paginator(tc.get_users_followers, id=me.id, user_auth=me.protected, max_results=1000).flatten()
         )
-        current_followers = [{"id": u.id, "username": u.username} for u in _current_followers]
+        current_followers = {u.id: {"username": u.username} for u in _current_followers}
 
-        for pf in prev_followers:
-            userid = pf["id"]
-            cf = next(filter(lambda _cf: _cf["id"] == userid, current_followers), None)
-            if cf:
+        for id, pf in prev_followers.items():
+            if cf := current_followers[id]:
                 if pf["username"] != cf["username"]:
                     notifications.append(f"@{pf['username']} has renamed to {to_twitter_link(cf['username'])}")
             else:
-                _res = tc.get_user(id=userid)
-                if errors := _res.errors:  # type:ignore
-                    notifications.append(f"@{pf['username']}: {errors[0]['detail']}")
+                res = tc.get_user(id=id)
+                if errors := res.errors:  # type:ignore
+                    notifications.append(f"@{pf['username']} {errors[0]['detail']}")
                 else:
-                    user: tweepy.User = _res.data  # type:ignore
+                    user: tweepy.User = res.data  # type:ignore
                     notifications.append(f"{to_twitter_link(user.username)} has been removed **{me.username}**")
 
         r.set(redis_key, json.dumps(current_followers))
