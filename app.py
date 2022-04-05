@@ -55,7 +55,7 @@ def friendship_observe_task(r: redis.Redis):
         current_followers = {str(u.id): {"username": u.username} for u in _current_followers}
 
         for id, pf in prev_followers.items():
-            if cf := current_followers[id]:
+            if cf := current_followers.get(id):
                 if pf["username"] != cf["username"]:
                     notifications.append(f"@{pf['username']} has renamed to {to_twitter_link(cf['username'])}")
             else:
